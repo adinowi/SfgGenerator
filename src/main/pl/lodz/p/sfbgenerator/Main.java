@@ -31,7 +31,7 @@ public class Main extends Application {
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
-        String a = DataApi.sendDesignObject("armchair", "armchair",
+        /*String a = DataApi.sendDesignObject("armchair", "armchair",
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedmesh.jpg"),
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedMesh.sfb"),
                 new ResponseHandler<HttpResponse>() {
@@ -59,7 +59,7 @@ public class Main extends Application {
                         return null;
                     }
                 });
-        System.out.println(a);
+        System.out.println(a);*/
 
 
     }
