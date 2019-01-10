@@ -17,6 +17,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import pl.lodz.p.sfbgenerator.controller.Controller;
 import pl.lodz.p.sfbgenerator.service.DataApi;
 
 import java.io.File;
@@ -27,7 +28,10 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("/view/view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/view.fxml"));
+        Parent root = (Parent)loader.load();
+        Controller controller = (Controller)loader.getController();
+        controller.setStage(primaryStage);
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
