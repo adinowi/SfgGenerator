@@ -12,9 +12,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import java.io.*;
 import java.net.URLEncoder;
+import java.sql.Timestamp;
 
 public class DataApi {
-    private static String HOST_NAME = "http://localhost:3000/";
+    private static String HOST_NAME = "https://interior-design-api.o-and-m.ovh/";
 
     public static String sendDesignObject(String name, String category, File image, File sfb, ResponseHandler<HttpResponse> responseHandler) {
         StringBuilder sb = new StringBuilder();
@@ -38,5 +39,15 @@ public class DataApi {
         }
 
         return sb.toString();
+    }
+
+    public static String sendDesignObject( String category, File image, File sfb, ResponseHandler<HttpResponse> responseHandler) {
+        return sendDesignObject(createName(category), category, image, sfb, responseHandler);
+    }
+
+    private static String createName(String category) {
+        String timestamp = String.valueOf(new Timestamp(System.currentTimeMillis()).getTime());
+
+        return "object_" +  category + "_" + timestamp;
     }
 }

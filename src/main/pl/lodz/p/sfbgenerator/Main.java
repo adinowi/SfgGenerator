@@ -1,10 +1,13 @@
 package pl.lodz.p.sfbgenerator;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -35,6 +38,13 @@ public class Main extends Application {
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent e) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
         /*String a = DataApi.sendDesignObject("armchair", "armchair",
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedmesh.jpg"),
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedMesh.sfb"),
