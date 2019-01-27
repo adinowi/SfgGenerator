@@ -35,8 +35,8 @@ public class Main extends Application {
         Parent root = (Parent)loader.load();
         Controller controller = (Controller)loader.getController();
         controller.setStage(primaryStage);
-        primaryStage.setTitle("Hello World");
-        primaryStage.setScene(new Scene(root, 300, 275));
+        primaryStage.setTitle("Model generator");
+        primaryStage.setScene(new Scene(root, 600, 600));
         primaryStage.show();
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
@@ -45,6 +45,7 @@ public class Main extends Application {
                 System.exit(0);
             }
         });
+        System.out.print("designobjects/9".split("[/]")[1]);
         /*String a = DataApi.sendDesignObject("armchair", "armchair",
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedmesh.jpg"),
                 new File("C:\\Users\\adino\\Desktop\\test\\texturedMesh.sfb"),

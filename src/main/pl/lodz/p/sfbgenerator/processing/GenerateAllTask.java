@@ -9,17 +9,13 @@ import java.io.File;
 import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Text;
 
 public class GenerateAllTask implements Runnable {
-    private Text objProgressText;
     private String command;
-    private Text sfbProgressText;
     private Controller controller;
     private String imageDir;
     private String category;
 
-    public GenerateAllTask(Text objProgressText, String command, Text sfbProgressText, Controller controller, String imageDir, String category) {
-        this.objProgressText = objProgressText;
+    public GenerateAllTask(String command, Controller controller, String imageDir, String category) {
         this.command = command;
-        this.sfbProgressText = sfbProgressText;
         this.controller = controller;
         this.imageDir = imageDir;
         this.category = category;
@@ -27,12 +23,12 @@ public class GenerateAllTask implements Runnable {
 
     @Override
     public void run() {
-        GenerateObjectTask generateObjectTask = new GenerateObjectTask(objProgressText, command);
+        GenerateObjectTask generateObjectTask = new GenerateObjectTask(command, controller);
         generateObjectTask.run();
 
         if(FileManager.checkGeneratingObj()) {
             File obj = new File(FileManager.GENERATED_OBJ);
-            GenerateSfbTask generateSfbTask = new GenerateSfbTask(sfbProgressText, obj.getAbsolutePath(), controller, imageDir, category);
+            GenerateSfbTask generateSfbTask = new GenerateSfbTask(obj.getAbsolutePath(), controller, imageDir, category);
             generateSfbTask.run();
         }
     }

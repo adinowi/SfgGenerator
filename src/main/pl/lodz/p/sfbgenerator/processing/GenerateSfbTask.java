@@ -1,5 +1,6 @@
 package pl.lodz.p.sfbgenerator.processing;
 
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,15 +16,13 @@ import java.io.File;
 import java.io.IOException;
 
 public class GenerateSfbTask implements Runnable {
-    private Text progress;
     private Process process;
     private String fileDir;
     private Controller controller;
     private String imageDir;
     private String category;
 
-    public GenerateSfbTask(Text progress, String fileDir, Controller controller, String imageDir, String category) {
-        this.progress = progress;
+    public GenerateSfbTask(String fileDir, Controller controller, String imageDir, String category) {
         this.fileDir = fileDir;
         this.controller = controller;
         this.imageDir = imageDir;
@@ -35,39 +34,47 @@ public class GenerateSfbTask implements Runnable {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder("converter.exe", fileDir);
             process = processBuilder.start();
-            progress.setText("Generating...");
+            controller.getSfbProgressText().setText("Generating...");
             process.waitFor();
-            progress.setText("Done");
+            controller.getSfbProgressText().setText("Generated sfb");
+            controller.getQrProgress().setText("Generating...");
             String sfbName = (new File(fileDir).getName().split("[.]"))[0] + ".sfb";
-            DataApi.sendDesignObject(category,
-                    new File(imageDir),
-                    new File(sfbName),
-                    new ResponseHandler<HttpResponse>() {
-                        @Override
-                        public HttpResponse handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
-                            if(httpResponse.getStatusLine().getStatusCode() == 201) {
-                                HttpEntity entity = httpResponse.getEntity();
-                                String endpoint = "";
-                                if (entity != null) {
-                                    String retSrc = EntityUtils.toString(entity);
-                                    // parsing JSON
+            Color color = controller.getColorPicker().getValue();
+            String hexColor = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+            ResponseHandler<HttpResponse> responseHandler = new ResponseHandler<HttpResponse>() {
+                @Override
+                public HttpResponse handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
+                    if(httpResponse.getStatusLine().getStatusCode() == 201) {
+                        HttpEntity entity = httpResponse.getEntity();
+                        String endpoint = "";
+                        if (entity != null) {
+                            String retSrc = EntityUtils.toString(entity);
+                            // parsing JSON
 
-                                    try {
-                                        JSONObject result = new JSONObject(retSrc); //Convert String to JSON Object
+                            try {
+                                JSONObject result = new JSONObject(retSrc); //Convert String to JSON Object
 
-                                        endpoint = result.getString("endpoint");
-                                        controller.generateQrCode(endpoint);
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                System.out.println(endpoint);
-
-                                return httpResponse;
+                                endpoint = result.getString("endpoint");
+                                controller.getStatusIdModel().setText(endpoint.split("[/]")[1]);
+                                controller.generateQrCode(endpoint);
+                                controller.getQrProgress().setText("Created QR code");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-                            return null;
                         }
-                    });
+                        System.out.println(endpoint);
+
+                        return httpResponse;
+                    }
+                    return null;
+                }
+            };
+            if(!controller.getIsSub().isSelected()) {
+                DataApi.sendDesignObject(category, new File(imageDir), new File(sfbName), hexColor, responseHandler);
+            } else {
+                DataApi.sendSubObject(category, new File(imageDir), new File(sfbName), hexColor, Long.valueOf(controller.getIdInput().getText()), responseHandler);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

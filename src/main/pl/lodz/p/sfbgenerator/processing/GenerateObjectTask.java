@@ -1,16 +1,16 @@
 package pl.lodz.p.sfbgenerator.processing;
 
 import javafx.scene.text.Text;
+import pl.lodz.p.sfbgenerator.controller.Controller;
 
 import java.io.IOException;
 
 public class GenerateObjectTask implements Runnable {
-    private Text progress;
     private String command;
     private Process process;
+    private Controller controller;
 
-    public GenerateObjectTask(Text progress, String command) {
-        this.progress = progress;
+    public GenerateObjectTask(String command, Controller controller) {
         this.command = command;
     }
 
@@ -19,9 +19,9 @@ public class GenerateObjectTask implements Runnable {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder("cmd","/c", "start","/wait", "cmd.exe","/c", command);
             process = processBuilder.start();
-            progress.setText("Generating...");
+            controller.getObjProgressText().setText("Generating...");
             process.waitFor();
-            progress.setText("Done");
+            controller.getObjProgressText().setText("Done");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

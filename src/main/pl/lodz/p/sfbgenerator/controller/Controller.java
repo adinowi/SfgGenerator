@@ -18,9 +18,12 @@ import pl.lodz.p.sfbgenerator.processing.GenerateAllTask;
 import pl.lodz.p.sfbgenerator.processing.GenerateObjectTask;
 import pl.lodz.p.sfbgenerator.processing.GenerateSfbTask;
 import pl.lodz.p.sfbgenerator.qrcode.QRCodeGenerator;
+import pl.lodz.p.sfbgenerator.service.DataApi;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -37,7 +40,12 @@ public class Controller implements Initializable {
     @FXML private Spinner<String> categorySpinner;
     private File choosenImgDir;
     @FXML private ImageView image;
-
+    @FXML private Text qrProgress;
+    @FXML private Text idText;
+    @FXML private Text statusIdModel;
+    @FXML private TextField idInput;
+    @FXML private CheckBox isSub;
+    @FXML private ColorPicker colorPicker;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -98,13 +106,7 @@ public class Controller implements Initializable {
     }
 
     public void generateObjectModel(ActionEvent event) {
-        if(!FileManager.checkDirectory(selectedImagesDirectory)) {
-        //if(false) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("Directory is empty or contains not only image files");
-            alert.showAndWait();
-        } else {
+        if(checkObjGeneration()) {
             File tempDir = FileManager.createTempDir();
             try {
 
@@ -112,7 +114,7 @@ public class Controller implements Initializable {
                         selectedImagesDirectory.getPath() + "\" \"" + new File(FileManager.MESH_ROOM_BIN) + "\" " +
                         String.valueOf(FileManager.getFilesCount(selectedImagesDirectory)) + " " + FileManager.RUN_OPTION + "\"";
 
-                new Thread(new GenerateObjectTask(objProgressText, command)).start();
+                new Thread(new GenerateObjectTask(command, this)).start();
 
 
 
@@ -124,21 +126,16 @@ public class Controller implements Initializable {
     }
 
     public void generateSfbModel(ActionEvent event) {
-        if(false) {
-            //if(false) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("Directory is empty or contains not only image files");
-            alert.showAndWait();
-        } else {
-            try {
-                new Thread(new GenerateSfbTask(sfbProgressText, selectedObjDirectory.getCanonicalPath(), this,
-                        choosenImgDir.getAbsolutePath(), categorySpinner.getValue())).start();
-            } catch (IOException e) {
-                e.printStackTrace();
+
+            if(checkSfbGeneration()) {
+                try {
+                    new Thread(new GenerateSfbTask(selectedObjDirectory.getCanonicalPath(), this,
+                            choosenImgDir.getAbsolutePath(), categorySpinner.getValue())).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
-        }
     }
 
     public void generateQrCode(String text) {
@@ -154,20 +151,122 @@ public class Controller implements Initializable {
 
     public void generateAll(ActionEvent event) {
         File tempDir = FileManager.createTempDir();
-        try {
+        if(checkImgIsSub() && checkObjGeneration()) {
+            try {
 
-            String command = "\"\"" + new File(FileManager.CLI_EXE) + "\" \"" + tempDir.getCanonicalPath() + "\" \"" +
-                    selectedImagesDirectory.getPath() + "\" \"" + new File(FileManager.MESH_ROOM_BIN) + "\" " +
-                    String.valueOf(FileManager.getFilesCount(selectedImagesDirectory)) + " " + FileManager.RUN_OPTION + "\"";
+                String command = "\"\"" + new File(FileManager.CLI_EXE) + "\" \"" + tempDir.getCanonicalPath() + "\" \"" +
+                        selectedImagesDirectory.getPath() + "\" \"" + new File(FileManager.MESH_ROOM_BIN) + "\" " +
+                        String.valueOf(FileManager.getFilesCount(selectedImagesDirectory)) + " " + FileManager.RUN_OPTION + "\"";
 
-            new Thread(new GenerateAllTask(objProgressText, command, sfbProgressText,
-                    this, choosenImgDir.getAbsolutePath(), categorySpinner.getValue())).start();
+                new Thread(new GenerateAllTask(command,
+                        this, choosenImgDir.getAbsolutePath(), categorySpinner.getValue())).start();
 
 
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    public Text getObjProgressText() {
+        return objProgressText;
+    }
+
+    public Text getSfbProgressText() {
+        return sfbProgressText;
+    }
+
+    public Text getQrProgress() {
+        return qrProgress;
+    }
+
+    public void changeIsSub() {
+        if(isSub.isSelected()) {
+            idText.setOpacity(1);
+            idInput.setOpacity(1);
+        } else {
+            idText.setOpacity(0);
+            idInput.setOpacity(0);
+        }
+    }
+
+    private boolean checkSfbGeneration() {
+        if(selectedObjDirectory == null || !FileManager.checkObjValidation(selectedObjDirectory)) {
+            showError("It is wrong file! You need obj, fbx, gltf extension");
+            return false;
+        }
+
+        if(!checkImgIsSub()) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkImgIsSub() {
+        if(choosenImgDir != null) {
+            Path path = choosenImgDir.toPath();
+            try {
+                String mimeType = Files.probeContentType(path);
+                if (!mimeType.matches("image\\/.*")) {
+                    showError("Wrong image");
+                    return false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                showError("Wrong image");
+                return false;
+            }
+        } else {
+            showError("No choosen img");
+            return false;
+        }
+
+        if(isSub.isSelected()) {
+            try {
+                long id = Long.valueOf(idInput.getText());
+                if(!DataApi.checkModelExist(id)) {
+                    showError("Id is incorrect");
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                showError("Id is incorrect");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean checkObjGeneration() {
+        if(!FileManager.checkDirectory(selectedImagesDirectory)) {
+            showError("Directory is empty or contains not only image files");
+            return false;
+        }
+         return true;
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(message);
+        alert.showAndWait();
+    }
+
+    public Text getStatusIdModel() {
+        return statusIdModel;
+    }
+
+    public ColorPicker getColorPicker() {
+        return colorPicker;
+    }
+
+    public CheckBox getIsSub() {
+        return isSub;
+    }
+
+    public TextField getIdInput() {
+        return idInput;
     }
 }
 

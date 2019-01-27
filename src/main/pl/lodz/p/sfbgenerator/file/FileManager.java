@@ -7,12 +7,17 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileManager {
     public static final String MESH_ROOM_BIN = "alicevision-bin";
     public static final String RUN_OPTION = "runall";
     public static final String CLI_EXE = "alice-vision-cli/run_alicevision.exe";
     public static final String GENERATED_OBJ = "temp/11_Texturing/texturedMesh.obj";
+    public static final Set<String> objExtensions = new HashSet(Arrays.asList("obj", "fbx", "gltf"));
 
     public static boolean checkDirectory(File directory) {
         if (directory == null) {
@@ -60,6 +65,14 @@ public class FileManager {
         }
 
         return false;
+    }
+
+    public static boolean checkObjValidation(File file) {
+        if(objExtensions.contains(file.getName().split("[.]")[1])) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 
